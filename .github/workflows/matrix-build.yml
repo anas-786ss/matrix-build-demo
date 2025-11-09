@@ -2,29 +2,36 @@ name: Matrix Build with Artifacts
 
 on:
   push:
-    branches: [ main ]  # Triggers on pushes to the main branch
-  workflow_dispatch:  # Allows manual triggering from the GitHub UI
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:  # Ensures upload works
+      contents: read
     strategy:
       matrix:
-        version: [14, 16, 18]  # 3 variants for demonstration (e.g., Node.js versions)
+        version: [14, 16, 18]  # Ensures 3 jobs
+      fail-fast: false  # Continues if one fails (for testing)
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: matrix-90b5ee6  # Required step identifier
+      - name: matrix-90b5ee6  # Required identifier
         run: echo "Building for version ${{ matrix.version }}"
 
       - name: Generate build artifact
-        run: echo "Build output for version $$ {{ matrix.version }}. This is a non-empty artifact." > output- $${{ matrix.version }}.txt
+        run: |
+          echo "Build output for version ${{ matrix.version }}. This is a non-empty artifact." > output-${{ matrix.version }}.txt
+          # Debug: Confirm file created
+          ls -la output-${{ matrix.version }}.txt
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4  # Must be v4
         with:
-          name: build-90b5ee6-v${{ matrix.version }}  # Prefix: build-90b5ee6-<variant>
+          name: build-90b5ee6-v${{ matrix.version }}  # Unique prefix + variant
           path: output-${{ matrix.version }}.txt
-          retention-days: 5  # Optional: Keeps artifacts for 5 days
+          retention-days: 5
+          if-no-files-found: warn  # Warns if path empty (helps debug)
